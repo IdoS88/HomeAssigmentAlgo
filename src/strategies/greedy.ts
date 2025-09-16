@@ -4,6 +4,7 @@ import { isRideLegalForDriver } from '../legal.js';
 import { haversineKm } from '../geo.js';
 import { driverTimeCostAg, fuelCostAg, sumAg } from '../cost.js';
 import { parseDateTime } from '../domain.js';
+import type { TravelEngine } from '../osrm.js';
 
 /**
  * Greedy baseline strategy:
@@ -12,11 +13,13 @@ import { parseDateTime } from '../domain.js';
  * 3. Choose driver with lowest fuelCost (tie-breaker: stable IDs)
  */
 export class GreedyStrategy implements Strategy {
-  assign(
+  constructor(private travelEngine?: TravelEngine) {}
+
+  async assign(
     rides: Ride[],
     drivers: Driver[],
     options: StrategyOptions = {},
-  ): Assignment[] {
+  ): Promise<Assignment[]> {
     const assignments: Assignment[] = [];
     const availableDrivers = [...drivers];
 
@@ -44,18 +47,28 @@ export class GreedyStrategy implements Strategy {
           return a.fuelCost - b.fuelCost;
         }
         return a.id.localeCompare(b.id);
-      })[0];
+      })[0]!;
 
-      // Calculate costs
-      const loadedDistanceKm = haversineKm(
-        ride.pickup.lat,
-        ride.pickup.lng,
-        ride.dropoff.lat,
-        ride.dropoff.lng,
-      );
+      // Calculate costs using travel engine
+      const loadedMetrics = this.travelEngine
+        ? await this.travelEngine(
+            ride.pickup.lat,
+            ride.pickup.lng,
+            ride.dropoff.lat,
+            ride.dropoff.lng,
+          )
+        : {
+            km: haversineKm(
+              ride.pickup.lat,
+              ride.pickup.lng,
+              ride.dropoff.lat,
+              ride.dropoff.lng,
+            ),
+            minutes: parseDateTime(ride.date, ride.endTime) - parseDateTime(ride.date, ride.startTime),
+          };
 
-      const loadedTimeMinutes = parseDateTime(ride.date, ride.endTime) -
-        parseDateTime(ride.date, ride.startTime);
+      const loadedDistanceKm = loadedMetrics.km;
+      const loadedTimeMinutes = loadedMetrics.minutes;
 
       let totalCostAg = sumAg(
         driverTimeCostAg(loadedTimeMinutes),
@@ -66,15 +79,32 @@ export class GreedyStrategy implements Strategy {
       let deadheadDistanceKm: number | undefined;
 
       if (options.includeDeadheadTime || options.includeDeadheadFuel) {
-        deadheadDistanceKm = haversineKm(
-          chosenDriver.location.lat,
-          chosenDriver.location.lng,
-          ride.pickup.lat,
-          ride.pickup.lng,
-        );
+        const deadheadMetrics = this.travelEngine
+          ? await this.travelEngine(
+              chosenDriver.location.lat,
+              chosenDriver.location.lng,
+              ride.pickup.lat,
+              ride.pickup.lng,
+            )
+          : {
+              km: haversineKm(
+                chosenDriver.location.lat,
+                chosenDriver.location.lng,
+                ride.pickup.lat,
+                ride.pickup.lng,
+              ),
+              minutes: Math.round(
+                haversineKm(
+                  chosenDriver.location.lat,
+                  chosenDriver.location.lng,
+                  ride.pickup.lat,
+                  ride.pickup.lng,
+                ) * 60 / 50, // 50km/h estimate
+              ),
+            };
 
-        // Rough estimate: assume 50km/h for deadhead
-        deadheadTimeMinutes = Math.round(deadheadDistanceKm * 60 / 50);
+        deadheadDistanceKm = deadheadMetrics.km;
+        deadheadTimeMinutes = deadheadMetrics.minutes;
 
         if (options.includeDeadheadTime) {
           totalCostAg = sumAg(totalCostAg, driverTimeCostAg(deadheadTimeMinutes));
@@ -92,8 +122,8 @@ export class GreedyStrategy implements Strategy {
         totalCostAg,
         loadedTimeMinutes,
         loadedDistanceKm,
-        deadheadTimeMinutes,
-        deadheadDistanceKm,
+        ...(deadheadTimeMinutes !== undefined && { deadheadTimeMinutes }),
+        ...(deadheadDistanceKm !== undefined && { deadheadDistanceKm }),
       };
 
       assignments.push(assignment);

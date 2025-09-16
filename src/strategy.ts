@@ -28,7 +28,7 @@ export interface Strategy {
     rides: Ride[],
     drivers: Driver[],
     options?: StrategyOptions,
-  ): Assignment[];
+  ): Assignment[] | Promise<Assignment[]>;
 }
 
 /**
