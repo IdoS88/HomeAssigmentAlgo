@@ -1,0 +1,29 @@
+{
+  "name": "home-assignment-algo",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ride assignment algorithm with greedy and min-cost flow strategies",
+  "main": "dist/cli.js",
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "test": "tsx --test --test-reporter=spec"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "pino": "^8.17.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.10.6",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "prettier": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

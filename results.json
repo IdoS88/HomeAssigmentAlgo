@@ -1,0 +1,36 @@
+{
+  "assignments": [
+    {
+      "rideId": "ride1",
+      "driverId": "driver3",
+      "totalCostShekels": 11.72,
+      "loadedTimeMinutes": 20,
+      "loadedDistanceKm": 0.8619049578582082
+    },
+    {
+      "rideId": "ride4",
+      "driverId": "driver1",
+      "totalCostShekels": 19.56,
+      "loadedTimeMinutes": 20,
+      "loadedDistanceKm": 3.824911719865582
+    },
+    {
+      "rideId": "ride5",
+      "driverId": "driver2",
+      "totalCostShekels": 44.55,
+      "loadedTimeMinutes": 20,
+      "loadedDistanceKm": 13.820126659209736
+    },
+    {
+      "rideId": "ride11",
+      "driverId": "driver4",
+      "totalCostShekels": 28.14,
+      "loadedTimeMinutes": 20,
+      "loadedDistanceKm": 7.255100224664888
+    }
+  ],
+  "summary": {
+    "totalAssignments": 4,
+    "totalCostShekels": 103.97
+  }
+}
