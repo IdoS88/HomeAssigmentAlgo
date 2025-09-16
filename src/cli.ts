@@ -6,6 +6,7 @@ import { GreedyStrategy } from './strategies/greedy.js';
 import { MinCostFlowStrategy } from './strategies/minCostFlow.js';
 import type { Strategy } from './strategy.js';
 import { fromAgorot } from './cost.js';
+import { createTravelEngine } from './osrm.js';
 
 interface CLIOptions {
   drivers: string;
@@ -104,10 +105,10 @@ Examples:
 `);
 }
 
-function createStrategy(strategyName: string): Strategy {
+function createStrategy(strategyName: string, travelEngine?: any): Strategy {
   switch (strategyName) {
     case 'greedy':
-      return new GreedyStrategy();
+      return new GreedyStrategy(travelEngine);
     case 'mincost':
       return new MinCostFlowStrategy();
     default:
@@ -146,9 +147,12 @@ async function main(): Promise<void> {
     const drivers = parseDrivers(driversData);
     const rides = parseRides(ridesData);
 
+    // Create travel engine
+    const travelEngine = createTravelEngine({ useOsrm: options.osrm });
+
     // Create strategy and run assignment
-    const strategy = createStrategy(options.strategy);
-    const assignments = strategy.assign(rides, drivers, {
+    const strategy = createStrategy(options.strategy, travelEngine);
+    const assignments = await strategy.assign(rides, drivers, {
       includeDeadheadTime: options.includeDeadheadTime,
       includeDeadheadFuel: options.includeDeadheadFuel,
       useOSRM: options.osrm,
@@ -171,6 +175,6 @@ async function main(): Promise<void> {
 }
 
 // Run if this file is executed directly
-if (import.meta.url.endsWith(process.argv[1]) || import.meta.url.includes('cli.ts')) {
+if (import.meta.url.endsWith(process.argv[1] ?? '') || import.meta.url.includes('cli.ts')) {
   main();
 }

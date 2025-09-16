@@ -23,7 +23,7 @@ describe('GreedyStrategy', () => {
     passengers,
   });
 
-  test('should assign rides to drivers with lowest fuel cost', () => {
+  test('should assign rides to drivers with lowest fuel cost', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [
@@ -33,14 +33,14 @@ describe('GreedyStrategy', () => {
     
     const rides = [createRide('ride1', 4)];
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 1);
     assert.strictEqual(assignments[0]!.driver.id, 'driver2');
     assert.strictEqual(assignments[0]!.ride.id, 'ride1');
   });
 
-  test('should respect license limitations', () => {
+  test('should respect license limitations', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [
@@ -50,13 +50,13 @@ describe('GreedyStrategy', () => {
     
     const rides = [createRide('ride1', 10)]; // 10 passengers
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 1);
     assert.strictEqual(assignments[0]!.driver.id, 'driver2'); // Only D1 driver can handle 10 passengers
   });
 
-  test('should respect vehicle seat capacity', () => {
+  test('should respect vehicle seat capacity', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [
@@ -66,13 +66,13 @@ describe('GreedyStrategy', () => {
     
     const rides = [createRide('ride1', 7)]; // 7 passengers
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 1);
     assert.strictEqual(assignments[0]!.driver.id, 'driver2'); // Only driver2 has enough seats
   });
 
-  test('should sort rides by start time', () => {
+  test('should sort rides by start time', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [
@@ -85,14 +85,14 @@ describe('GreedyStrategy', () => {
       createRide('ride1', 4, '09:00', '10:00'),
     ];
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 2);
     assert.strictEqual(assignments[0]!.ride.id, 'ride1'); // Earlier ride first
     assert.strictEqual(assignments[1]!.ride.id, 'ride2');
   });
 
-  test('should use stable ID sorting for tie-breaking', () => {
+  test('should use stable ID sorting for tie-breaking', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [
@@ -102,13 +102,13 @@ describe('GreedyStrategy', () => {
     
     const rides = [createRide('ride1', 4)];
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 1);
     assert.strictEqual(assignments[0]!.driver.id, 'driver1'); // Lower ID wins
   });
 
-  test('should skip rides with no feasible drivers', () => {
+  test('should skip rides with no feasible drivers', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [createDriver('driver1', 2.0, 'B', 8)]; // B license: max 8 passengers
@@ -118,19 +118,19 @@ describe('GreedyStrategy', () => {
       createRide('ride2', 10), // Not feasible (too many passengers)
     ];
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 1);
     assert.strictEqual(assignments[0]!.ride.id, 'ride1');
   });
 
-  test('should calculate costs correctly', () => {
+  test('should calculate costs correctly', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [createDriver('driver1', 2.0)]; // 2₪/km
     const rides = [createRide('ride1', 4, '09:00', '10:00')]; // 1 hour = 60 minutes
     
-    const assignments = strategy.assign(rides, drivers);
+    const assignments = await strategy.assign(rides, drivers);
     
     assert.strictEqual(assignments.length, 1);
     const assignment = assignments[0]!;
@@ -141,7 +141,7 @@ describe('GreedyStrategy', () => {
     assert(assignment.totalCostAg > 0);
   });
 
-  test('should include deadhead costs when requested', () => {
+  test('should include deadhead costs when requested', async () => {
     const strategy = new GreedyStrategy();
     
     const drivers = [{
@@ -150,7 +150,7 @@ describe('GreedyStrategy', () => {
     }];
     const rides = [createRide('ride1', 4)];
     
-    const assignments = strategy.assign(rides, drivers, {
+    const assignments = await strategy.assign(rides, drivers, {
       includeDeadheadTime: true,
       includeDeadheadFuel: true,
     });

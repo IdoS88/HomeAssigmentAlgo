@@ -10,13 +10,13 @@ import { GreedyStrategy } from './greedy.js';
 export class MinCostFlowStrategy implements Strategy {
   private greedyStrategy = new GreedyStrategy();
 
-  assign(
+  async assign(
     rides: Ride[],
     drivers: Driver[],
     options: StrategyOptions = {},
-  ): Assignment[] {
+  ): Promise<Assignment[]> {
     // TODO: Implement min-cost flow algorithm
     // For now, delegate to greedy strategy
-    return this.greedyStrategy.assign(rides, drivers, options);
+    return await this.greedyStrategy.assign(rides, drivers, options);
   }
 }
