@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { MinCostFlowStrategy } from '../../src/strategies/minCostFlow.js';
-import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../../src/test-helpers.js';
+import { MinCostFlowStrategy } from '../../dist/strategies/mincost-legacy.js';
+import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../../dist/test-helpers.js';
 
 describe('MinCostFlowStrategy', () => {
 

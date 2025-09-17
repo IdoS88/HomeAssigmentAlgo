@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { GreedyStrategy } from './src/strategies/greedy.js';
+import { GreedyStrategy } from '../dist/strategies/greedy-legacy.js';
 
 console.log('🔍 Simple Memory Leak Test\n');
 

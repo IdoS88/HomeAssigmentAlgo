@@ -1,8 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from '../../src/strategies/greedy.js';
-import { MinCostFlowStrategy } from '../../src/strategies/minCostFlow.js';
-import { TestDataFactory } from '../../src/test-helpers.js';
+import { GreedyStrategy } from '../../dist/strategies/greedy-legacy.js';
+import { MinCostFlowStrategy } from '../../dist/strategies/mincost-legacy.js';
+import { TestDataFactory } from '../../dist/test-helpers.js';
 
 describe('Quick Performance Test', () => {
   test('GIVEN minimal dataset WHEN assigning THEN should complete quickly', async () => {

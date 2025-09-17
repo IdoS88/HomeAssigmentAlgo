@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from '../../src/strategies/greedy.js';
-import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../../src/test-helpers.js';
+import { GreedyStrategy } from '../../dist/strategies/greedy-legacy.js';
+import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../../dist/test-helpers.js';
 
 describe('GreedyStrategy', () => {
 

@@ -1,8 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from '../../src/strategies/greedy.js';
-import { MinCostFlowStrategy } from '../../src/strategies/minCostFlow.js';
-import { parseDrivers, parseRides } from '../domain.js';
+import { GreedyStrategy } from '../../dist/strategies/greedy-legacy.js';
+import { MinCostFlowStrategy } from '../../dist/strategies/mincost-legacy.js';
+import { parseDrivers, parseRides } from '../../dist/domain.js';
 
 describe('Algorithm Comparison', () => {
   test('should compare greedy vs min-cost flow performance', async () => {

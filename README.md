@@ -15,10 +15,39 @@ A sophisticated ride assignment system that optimally matches drivers with rides
 ```bash
 # Install dependencies and run with sample data
 npm install
-npm start
+npm start            # auto-picks the best strategy
+npm run start:greedy # force greedy
+npm run start:mincost# force min-cost
+npm run dev          # TS watch + auto
 ```
 
 That's it! The project will build and run with sample data, showing you the ride assignment algorithm in action.
+
+### Expected Output Format
+
+The algorithm outputs a JSON object with the following structure:
+
+```json
+{
+  "assignments": [
+    {
+      "driverId": "driver1",
+      "rideIds": ["ride1", "ride2"]
+    },
+    {
+      "driverId": "driver2", 
+      "rideIds": ["ride3"]
+    }
+  ],
+  "totalCost": 26308
+}
+```
+
+Where:
+- `assignments`: Array of driver assignments, each containing:
+  - `driverId`: The ID of the assigned driver
+  - `rideIds`: Array of ride IDs assigned to this driver
+- `totalCost`: Total cost of all assignments in agorot (Israeli currency units)
 
 ### Alternative Commands
 

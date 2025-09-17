@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
-import { GreedyStrategy } from './src/strategies/greedy.js';
-import { MinCostFlowStrategy } from './src/strategies/minCostFlow.js';
-import { TestDataFactory } from './src/test-helpers.js';
+import { GreedyStrategy } from '../dist/strategies/greedy-legacy.js';
+import { MinCostFlowStrategy } from '../dist/strategies/mincost-legacy.js';
+import { TestDataFactory, PerformanceTestHelpers } from '../dist/test-helpers.js';
 
 console.log('🔍 Comprehensive Memory Leak Test\n');
 
 // Create a more substantial dataset
-const drivers = TestDataFactory.createLargeDataset(10, 20).drivers;
-const rides = TestDataFactory.createLargeDataset(10, 20).rides;
+const { drivers, rides } = PerformanceTestHelpers.createLargeDataset(10, 20);
 
 // Add shifts to drivers
 drivers.forEach(driver => {

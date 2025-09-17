@@ -1,9 +1,9 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from '../../src/strategies/greedy.js';
-import { MinCostFlowStrategy } from '../../src/strategies/minCostFlow.js';
-import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../test-helpers.js';
-import { parseDrivers, parseRides } from '../domain.js';
+import { GreedyStrategy } from '../../dist/strategies/greedy-legacy.js';
+import { MinCostFlowStrategy } from '../../dist/strategies/mincost-legacy.js';
+import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../../dist/test-helpers.js';
+import { parseDrivers, parseRides, parseShiftTime } from '../../dist/domain.js';
 
 describe('Integration Tests - End-to-End Ride Assignment', () => {
   
@@ -103,8 +103,8 @@ describe('Integration Tests - End-to-End Ride Assignment', () => {
           [{ start: '07:00', end: '15:00' }]
         ];
         (driver as any).shifts = shiftPatterns[index % shiftPatterns.length]!.map(shift => ({
-          startMinutes: TestDataFactory['parseShiftTime'](shift.start),
-          endMinutes: TestDataFactory['parseShiftTime'](shift.end)
+          startMinutes: parseShiftTime(shift.start),
+          endMinutes: parseShiftTime(shift.end)
         }));
       });
 
@@ -190,8 +190,8 @@ describe('Integration Tests - End-to-End Ride Assignment', () => {
           [{ start: '08:00', end: '16:00' }]
         ];
         (driver as any).shifts = shiftPatterns[index % shiftPatterns.length]!.map(shift => ({
-          startMinutes: TestDataFactory['parseShiftTime'](shift.start),
-          endMinutes: TestDataFactory['parseShiftTime'](shift.end)
+          startMinutes: parseShiftTime(shift.start),
+          endMinutes: parseShiftTime(shift.end)
         }));
       });
 
