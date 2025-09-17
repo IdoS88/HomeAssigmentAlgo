@@ -6,7 +6,7 @@ import { parseDateTime } from '../domain.js';
 import { haversineKm } from '../geo.js';
 import type { TravelEngine } from '../osrm.js';
 
-// Better than greedy - finds optimal assignments
+// Optimal with ride chaining - finds best assignments, enables driver reuse
 export class MinCostFlowStrategy implements Strategy {
   constructor(private travelEngine?: TravelEngine) {}
 
@@ -16,7 +16,15 @@ export class MinCostFlowStrategy implements Strategy {
     options: StrategyOptions = {},
   ): Promise<Assignment[]> {
     const assignments: Assignment[] = [];
-    const availableDrivers = [...drivers];
+    const driverSchedules = new Map<string, { lastEndTime: number; lastLocation: { lat: number; lng: number } }>();
+
+    // Initialize driver schedules with their starting locations
+    drivers.forEach(driver => {
+      driverSchedules.set(driver.id, {
+        lastEndTime: 0, // Start of day
+        lastLocation: driver.location
+      });
+    });
     
     const sortedRides = [...rides].sort((a, b) => {
       const aStart = parseDateTime(a.date, a.startTime);
@@ -25,15 +33,33 @@ export class MinCostFlowStrategy implements Strategy {
     });
 
     for (const ride of sortedRides) {
-      const bestAssignment = await this.findBestAssignment(ride, availableDrivers, options);
+      const rideStartTime = parseDateTime(ride.date, ride.startTime);
+      const rideEndTime = parseDateTime(ride.date, ride.endTime);
+      
+      // Find feasible drivers (legal + available + can reach pickup in time)
+      const feasibleDrivers = drivers.filter(driver => {
+        if (!isRideLegalForDriver(ride, driver)) return false;
+        
+        const schedule = driverSchedules.get(driver.id)!;
+        const timeToReach = this.calculateTravelTime(schedule.lastLocation, ride.pickup);
+        const arrivalTime = schedule.lastEndTime + timeToReach;
+        
+        return arrivalTime <= rideStartTime; // Can reach pickup before ride starts
+      });
+
+      if (feasibleDrivers.length === 0) {
+        continue;
+      }
+
+      const bestAssignment = await this.findBestAssignment(ride, feasibleDrivers, options);
       
       if (bestAssignment) {
         assignments.push(bestAssignment);
         
-        const driverIndex = availableDrivers.findIndex(d => d.id === bestAssignment.driver.id);
-        if (driverIndex !== -1) {
-          availableDrivers.splice(driverIndex, 1);
-        }
+        // Update driver schedule
+        const schedule = driverSchedules.get(bestAssignment.driver.id)!;
+        schedule.lastEndTime = rideEndTime;
+        schedule.lastLocation = ride.dropoff;
       }
     }
 
@@ -139,5 +165,11 @@ export class MinCostFlowStrategy implements Strategy {
       ...(deadheadTimeMinutes !== undefined && { deadheadTimeMinutes }),
       ...(deadheadDistanceKm !== undefined && { deadheadDistanceKm }),
     };
+  }
+
+  private calculateTravelTime(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
+    // Simple estimation: 50km/h average speed
+    const distance = haversineKm(from.lat, from.lng, to.lat, to.lng);
+    return Math.round(distance * 60 / 50); // Convert to minutes
   }
 }
