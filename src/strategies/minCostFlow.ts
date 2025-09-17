@@ -6,15 +6,7 @@ import { parseDateTime } from '../domain.js';
 import { haversineKm } from '../geo.js';
 import type { TravelEngine } from '../osrm.js';
 
-/**
- * Optimized Min-Cost Max-Flow strategy
- * 
- * Simplified approach that focuses on the most important optimizations:
- * 1. Better driver selection based on total cost
- * 2. Ride chaining when time-feasible
- * 3. Global cost optimization
- */
-
+// Optimal with ride chaining - finds best assignments, enables driver reuse
 export class MinCostFlowStrategy implements Strategy {
   constructor(private travelEngine?: TravelEngine) {}
 
@@ -24,27 +16,50 @@ export class MinCostFlowStrategy implements Strategy {
     options: StrategyOptions = {},
   ): Promise<Assignment[]> {
     const assignments: Assignment[] = [];
-    const availableDrivers = [...drivers];
+    const driverSchedules = new Map<string, { lastEndTime: number; lastLocation: { lat: number; lng: number } }>();
+
+    // Initialize driver schedules with their starting locations
+    drivers.forEach(driver => {
+      driverSchedules.set(driver.id, {
+        lastEndTime: 0, // Start of day
+        lastLocation: driver.location
+      });
+    });
     
-    // Sort rides by start time for better chaining opportunities
     const sortedRides = [...rides].sort((a, b) => {
       const aStart = parseDateTime(a.date, a.startTime);
       const bStart = parseDateTime(b.date, b.startTime);
       return aStart - bStart;
     });
 
-    // Try to assign rides with ride chaining
     for (const ride of sortedRides) {
-      const bestAssignment = await this.findBestAssignment(ride, availableDrivers, options);
+      const rideStartTime = parseDateTime(ride.date, ride.startTime);
+      const rideEndTime = parseDateTime(ride.date, ride.endTime);
+      
+      // Find feasible drivers (legal + available + can reach pickup in time)
+      const feasibleDrivers = drivers.filter(driver => {
+        if (!isRideLegalForDriver(ride, driver)) return false;
+        
+        const schedule = driverSchedules.get(driver.id)!;
+        const timeToReach = this.calculateTravelTime(schedule.lastLocation, ride.pickup);
+        const arrivalTime = schedule.lastEndTime + timeToReach;
+        
+        return arrivalTime <= rideStartTime; // Can reach pickup before ride starts
+      });
+
+      if (feasibleDrivers.length === 0) {
+        continue;
+      }
+
+      const bestAssignment = await this.findBestAssignment(ride, feasibleDrivers, options);
       
       if (bestAssignment) {
         assignments.push(bestAssignment);
         
-        // Remove the driver from available drivers (no reuse for simplicity)
-        const driverIndex = availableDrivers.findIndex(d => d.id === bestAssignment.driver.id);
-        if (driverIndex !== -1) {
-          availableDrivers.splice(driverIndex, 1);
-        }
+        // Update driver schedule
+        const schedule = driverSchedules.get(bestAssignment.driver.id)!;
+        schedule.lastEndTime = rideEndTime;
+        schedule.lastLocation = ride.dropoff;
       }
     }
 
@@ -79,7 +94,6 @@ export class MinCostFlowStrategy implements Strategy {
     driver: Driver,
     options: StrategyOptions,
   ): Promise<Assignment> {
-    // Calculate loaded metrics
     const loadedMetrics = this.travelEngine
       ? await this.travelEngine(
           ride.pickup.lat,
@@ -97,7 +111,6 @@ export class MinCostFlowStrategy implements Strategy {
           minutes: parseDateTime(ride.date, ride.endTime) - parseDateTime(ride.date, ride.startTime),
         };
 
-    // Calculate loaded cost
     let totalCostAg = sumAg(
       driverTimeCostAg(loadedMetrics.minutes),
       fuelCostAg(driver, loadedMetrics.km),
@@ -106,7 +119,6 @@ export class MinCostFlowStrategy implements Strategy {
     let deadheadTimeMinutes: number | undefined;
     let deadheadDistanceKm: number | undefined;
 
-    // Calculate deadhead costs if requested
     if (options.includeDeadheadTime || options.includeDeadheadFuel) {
       const deadheadMetrics = this.travelEngine
         ? await this.travelEngine(
@@ -153,5 +165,11 @@ export class MinCostFlowStrategy implements Strategy {
       ...(deadheadTimeMinutes !== undefined && { deadheadTimeMinutes }),
       ...(deadheadDistanceKm !== undefined && { deadheadDistanceKm }),
     };
+  }
+
+  private calculateTravelTime(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
+    // Simple estimation: 50km/h average speed
+    const distance = haversineKm(from.lat, from.lng, to.lat, to.lng);
+    return Math.round(distance * 60 / 50); // Convert to minutes
   }
 }
