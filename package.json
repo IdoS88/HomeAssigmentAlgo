@@ -5,10 +5,11 @@
   "description": "Ride assignment algorithm with greedy and min-cost flow strategies",
   "main": "dist/cli.js",
   "scripts": {
-    "dev": "tsx src/cli.ts",
-    "build": "tsc",
-    "build:only": "tsc",
-    "start": "npm run clean && npm run build:only && node dist/cli.js --drivers data/sample-drivers.json --rides data/sample-rides.json",
+    "dev": "tsx watch src/cli.ts --drivers data/drivers.json --rides data/rides.json --strategy greedy",
+    "build": "npm run build:only && npm run test:unit",
+    "build:only": "tsc -p tsconfig.json",
+    "prestart": "npm run build:only",
+    "start": "node dist/cli.js --drivers data/drivers.json --rides data/rides.json --strategy greedy",
     "start:greedy": "npm run clean && npm run build:only && node dist/cli.js --drivers data/sample-drivers.json --rides data/sample-rides.json --strategy greedy",
     "start:mincost": "npm run clean && npm run build:only && node dist/cli.js --drivers data/sample-drivers.json --rides data/sample-rides.json --strategy mincost",
     "start:with-deadhead": "npm run clean && npm run build:only && node dist/cli.js --drivers data/sample-drivers.json --rides data/sample-rides.json --includeDeadheadTime --includeDeadheadFuel",
@@ -27,9 +28,9 @@
     "lint": "eslint src/**/*.ts tests/**/*.ts tools/**/*.ts",
     "lint:fix": "eslint src/**/*.ts tests/**/*.ts tools/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts tests/**/*.ts tools/**/*.ts",
-    "clean": "rm -rf dist/ && rm -f *.tsbuildinfo",
+    "clean": "rimraf dist *.tsbuildinfo",
     "prebuild": "npm run clean",
-    "postbuild": "npm run test:unit"
+    "postbuild": "echo 'Build completed successfully'"
   },
   "dependencies": {
     "zod": "^3.22.4",
@@ -42,9 +43,10 @@
     "eslint": "^8.56.0",
     "@typescript-eslint/parser": "^6.17.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
-    "prettier": "^3.1.1"
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22"
   }
 }

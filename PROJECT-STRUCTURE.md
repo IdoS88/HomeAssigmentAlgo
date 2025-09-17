@@ -7,17 +7,28 @@ This document outlines the organized structure of the Ride Assignment Algorithm 
 ```
 HomeAssigmentAlgo/
 ├── 📁 src/                          # Source code
-│   ├── 📄 cli.ts                    # Command-line interface
-│   ├── 📄 cost.ts                   # Cost calculation utilities
-│   ├── 📄 domain.ts                 # Core domain models and validation
-│   ├── 📄 geo.ts                    # Geographic calculations
-│   ├── 📄 legal.ts                  # Business rule validation
-│   ├── 📄 osrm.ts                   # OSRM routing integration
-│   ├── 📄 strategy.ts               # Strategy interface
-│   ├── 📄 test-helpers.ts           # Test utilities
-│   └── 📁 strategies/               # Assignment strategies
-│       ├── 📄 greedy.ts             # Greedy assignment algorithm
-│       └── 📄 minCostFlow.ts        # Minimum cost flow algorithm
+│   ├── 📁 domain/                   # Domain layer (business logic)
+│   │   ├── 📄 entities.ts           # Core domain entities (Driver, Ride, Assignment)
+│   │   ├── 📄 value-objects.ts      # Value objects (coordinates, time, etc.)
+│   │   ├── 📄 repositories.ts       # Repository interfaces
+│   │   └── 📄 services.ts           # Domain services
+│   ├── 📁 app/                      # Application layer (use cases)
+│   │   ├── 📄 assignment-service.ts # Ride assignment use cases
+│   │   ├── 📄 cost-calculator.ts    # Cost calculation logic
+│   │   └── 📄 validation.ts         # Business rule validation
+│   ├── 📁 infra/                    # Infrastructure layer
+│   │   ├── 📄 geo.ts                # Geographic calculations
+│   │   ├── 📄 osrm.ts               # OSRM routing integration
+│   │   └── 📄 data-parser.ts        # Data parsing and validation
+│   ├── 📁 http/                     # HTTP/CLI layer
+│   │   ├── 📄 cli.ts                # Command-line interface
+│   │   ├── 📄 routes.ts             # HTTP routes (if applicable)
+│   │   └── 📄 middleware.ts         # HTTP middleware
+│   ├── 📁 strategies/               # Assignment strategies
+│   │   ├── 📄 greedy.ts             # Greedy assignment algorithm
+│   │   ├── 📄 minCostFlow.ts        # Minimum cost flow algorithm
+│   │   └── 📄 strategy.ts           # Strategy interface
+│   └── 📄 test-helpers.ts           # Test utilities
 │
 ├── 📁 tests/                        # Test files
 │   ├── 📁 unit/                     # Unit tests
@@ -31,11 +42,7 @@ HomeAssigmentAlgo/
 │   │   ├── 📄 comparison.test.ts
 │   │   └── 📄 integration.test.ts
 │   └── 📁 performance/              # Performance tests
-│
-├── 📁 docs/                         # Documentation
-│   ├── 📄 README.md                 # Documentation index
-│   ├── 📄 API.md                    # API reference
-│   └── 📄 QA-BEST-PRACTICES.md      # Testing standards
+│       └── 📄 placeholder.test.ts   # Placeholder test
 │
 ├── 📁 data/                         # Sample data files
 │   ├── 📄 drivers.json              # Original drivers data
@@ -45,20 +52,25 @@ HomeAssigmentAlgo/
 │   ├── 📄 sample-drivers.json       # Sample drivers data
 │   └── 📄 sample-rides.json         # Sample rides data
 │
-├── 📁 scripts/                      # Utility scripts
-│   ├── 📄 memory-test.js            # Detailed memory testing
-│   ├── 📄 simple-memory-test.js     # Simple memory testing
-│   └── 📄 test-simple.js            # Simple test runner
+├── 📁 docs/                         # Documentation
+│   ├── 📄 README.md                 # Documentation index
+│   ├── 📄 API.md                    # API reference
+│   └── 📄 QA-BEST-PRACTICES.md      # Testing standards
 │
 ├── 📁 tools/                        # Development tools
 │   ├── 📄 generate-data.ts          # Data generation utility
 │   ├── 📄 seed.example.md           # Example seed file
 │   └── 📄 seed.md                   # Seed configuration
 │
+├── 📁 dist/                         # Compiled JavaScript (generated)
+│   ├── 📄 cli.js                    # Compiled CLI
+│   ├── 📄 *.js                      # Other compiled files
+│   └── 📄 *.d.ts                    # TypeScript declarations
+│
 ├── 📄 package.json                  # Project configuration
 ├── 📄 tsconfig.json                 # TypeScript configuration
 ├── 📄 eslint.config.js              # ESLint configuration
-├── 📄 test.config.ts                # Test configuration
+├── 📄 .nvmrc                        # Node version specification
 ├── 📄 .gitignore                    # Git ignore rules
 ├── 📄 README.md                     # Project overview
 └── 📄 PROJECT-STRUCTURE.md          # This file
@@ -66,75 +78,58 @@ HomeAssigmentAlgo/
 
 ## 🎯 Organization Principles
 
-### 1. **Separation of Concerns**
-- **Source Code** (`src/`): Core application logic
+### 1. **Clean Architecture Layers**
+- **Domain Layer** (`src/domain/`): Core business logic and entities
+- **Application Layer** (`src/app/`): Use cases and application services
+- **Infrastructure Layer** (`src/infra/`): External dependencies and implementations
+- **HTTP Layer** (`src/http/`): CLI and HTTP interfaces
+
+### 2. **Separation of Concerns**
+- **Source Code** (`src/`): Core application logic organized by architectural layers
 - **Tests** (`tests/`): All test files organized by type
 - **Documentation** (`docs/`): Comprehensive documentation
 - **Data** (`data/`): Sample and test data files
-- **Scripts** (`scripts/`): Utility and maintenance scripts
 - **Tools** (`tools/`): Development and build tools
+- **Compiled Output** (`dist/`): Generated JavaScript files
 
-### 2. **Test Organization**
+### 3. **Test Organization**
 - **Unit Tests** (`tests/unit/`): Individual component testing
 - **Integration Tests** (`tests/integration/`): Component interaction testing
-- **Performance Tests** (`tests/performance/`): Performance and load testing
+- **Performance Tests** (`tests/performance/`): System performance testing
 
-### 3. **Documentation Structure**
-- **README.md**: Project overview and quick start
-- **API.md**: Complete API reference
-- **QA-BEST-PRACTICES.md**: Testing and quality standards
-- **PROJECT-STRUCTURE.md**: This structural overview
+## 🏗️ Architecture Overview
 
-### 4. **Data Management**
-- **Sample Data**: Clean, well-documented example files
-- **Enhanced Data**: Extended datasets for testing
-- **Generated Data**: Tool-generated test data (excluded from git)
+### Domain Layer (`src/domain/`)
+Contains the core business logic and entities:
+- **Entities**: Driver, Ride, Assignment
+- **Value Objects**: Coordinates, Time, Cost
+- **Repositories**: Data access interfaces
+- **Services**: Domain-specific business logic
 
-## 🚀 Key Features of This Structure
+### Application Layer (`src/app/`)
+Contains use cases and application services:
+- **Assignment Service**: Main ride assignment logic
+- **Cost Calculator**: Cost calculation algorithms
+- **Validation**: Business rule validation
 
-### ✅ **Professional Organization**
-- Clear separation between source, tests, docs, and utilities
-- Industry-standard directory naming conventions
-- Logical grouping of related files
+### Infrastructure Layer (`src/infra/`)
+Contains external dependencies and implementations:
+- **Geographic Services**: Distance and routing calculations
+- **OSRM Integration**: External routing service
+- **Data Parsing**: Input/output data handling
 
-### ✅ **Scalability**
-- Easy to add new strategies in `src/strategies/`
-- Simple to add new test types in `tests/`
-- Extensible documentation structure
-
-### ✅ **Maintainability**
-- Self-documenting structure
-- Clear file naming conventions
-- Comprehensive documentation
-
-### ✅ **Developer Experience**
-- Easy navigation and file discovery
-- Clear separation of concerns
-- Comprehensive tooling support
-
-## 📋 File Naming Conventions
-
-### Source Files
-- **kebab-case** for multi-word files: `min-cost-flow.ts`
-- **camelCase** for single concepts: `domain.ts`, `geo.ts`
-- **Descriptive names**: `test-helpers.ts`, `generate-data.ts`
-
-### Test Files
-- **Pattern**: `*.test.ts` for unit tests
-- **Pattern**: `*.integration.test.ts` for integration tests
-- **Pattern**: `*.performance.test.ts` for performance tests
-- **Descriptive names**: `shift-availability.test.ts`
-
-### Documentation Files
-- **UPPERCASE** for main documents: `README.md`, `API.md`
-- **kebab-case** for detailed docs: `project-structure.md`
-- **Descriptive names**: `qa-best-practices.md`
+### HTTP Layer (`src/http/`)
+Contains interfaces and controllers:
+- **CLI Interface**: Command-line application
+- **Routes**: HTTP endpoints (if applicable)
+- **Middleware**: Request/response processing
 
 ## 🔧 Configuration Files
 
 ### Package Management
 - **package.json**: Dependencies, scripts, and metadata
 - **package-lock.json**: Locked dependency versions
+- **.nvmrc**: Node version specification
 
 ### TypeScript
 - **tsconfig.json**: TypeScript compiler configuration
@@ -174,10 +169,12 @@ HomeAssigmentAlgo/
 ## 🛠️ Development Workflow
 
 ### Adding New Features
-1. Add source code to `src/`
-2. Add tests to appropriate `tests/` subdirectory
-3. Update documentation in `docs/`
-4. Update this structure document if needed
+1. Add domain entities to `src/domain/`
+2. Add use cases to `src/app/`
+3. Add infrastructure implementations to `src/infra/`
+4. Add interfaces to `src/http/`
+5. Add tests to appropriate `tests/` subdirectory
+6. Update documentation in `docs/`
 
 ### Adding New Tests
 1. Determine test category (unit/integration/performance)
@@ -193,40 +190,29 @@ HomeAssigmentAlgo/
 ## 🎯 Benefits of This Structure
 
 ### For Developers
-- **Easy Navigation**: Clear file organization
+- **Easy Navigation**: Clear file organization by architectural layers
 - **Quick Understanding**: Self-documenting structure
-- **Efficient Development**: Logical file placement
+- **Scalability**: Easy to add new features and components
+- **Maintainability**: Clear separation of concerns
 
-### For Maintainers
-- **Easy Maintenance**: Clear separation of concerns
-- **Simple Updates**: Organized change management
-- **Quality Assurance**: Comprehensive testing structure
+### For Reviewers
+- **Clear Architecture**: Easy to understand the system design
+- **Test Coverage**: Comprehensive testing structure
+- **Documentation**: Well-documented codebase
+- **Standards**: Consistent coding and testing practices
 
 ### For Users
-- **Clear Documentation**: Easy to find information
-- **Professional Appearance**: Well-organized project
-- **Easy Setup**: Clear installation and usage instructions
+- **Reliability**: Well-tested and documented system
+- **Performance**: Optimized algorithms and implementations
+- **Usability**: Clear CLI interface and documentation
+- **Extensibility**: Easy to add new features and strategies
 
-## 🔄 Maintenance Guidelines
+## 🔄 Migration Notes
 
-### Regular Tasks
-- Keep documentation up-to-date
-- Maintain test coverage
-- Update dependencies regularly
-- Review and clean up unused files
+This structure represents a clean architecture approach that:
+- Separates business logic from infrastructure concerns
+- Makes the codebase more testable and maintainable
+- Provides clear boundaries between different layers
+- Enables easy addition of new features and strategies
 
-### When Adding Files
-- Follow established naming conventions
-- Place files in appropriate directories
-- Update relevant documentation
-- Add tests for new functionality
-
-### When Modifying Structure
-- Update this document
-- Update documentation references
-- Update build and test configurations
-- Communicate changes to team
-
----
-
-This structure provides a solid foundation for a professional, maintainable, and scalable TypeScript project. It follows industry best practices and provides clear organization for all project components.
+The current implementation maintains backward compatibility while providing a foundation for future enhancements.

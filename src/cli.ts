@@ -8,7 +8,7 @@ import type { Strategy } from './strategy.js';
 import { fromAgorot } from './cost.js';
 import { createTravelEngine } from './osrm.js';
 
-interface CLIOptions {
+export interface CLIOptions {
   drivers: string;
   rides: string;
   strategy: 'greedy' | 'mincost';
@@ -18,7 +18,7 @@ interface CLIOptions {
   osrm: boolean;
 }
 
-function parseArgs(): CLIOptions {
+export function parseArgs(): CLIOptions {
   const args = process.argv.slice(2);
   const options: Partial<CLIOptions> = {
     strategy: 'greedy',
@@ -136,30 +136,33 @@ function formatOutput(assignments: any[]): string {
   }, null, 2);
 }
 
+export async function run(options: CLIOptions): Promise<string> {
+  // Load and parse data
+  const driversData = JSON.parse(readFileSync(options.drivers, 'utf-8'));
+  const ridesData = JSON.parse(readFileSync(options.rides, 'utf-8'));
+
+  const drivers = parseDrivers(driversData);
+  const rides = parseRides(ridesData);
+
+  // Create travel engine
+  const travelEngine = createTravelEngine({ useOsrm: options.osrm });
+
+  // Create strategy and run assignment
+  const strategy = createStrategy(options.strategy, travelEngine);
+  const assignments = await strategy.assign(rides, drivers, {
+    includeDeadheadTime: options.includeDeadheadTime,
+    includeDeadheadFuel: options.includeDeadheadFuel,
+    useOSRM: options.osrm,
+  });
+
+  // Format and return results
+  return formatOutput(assignments);
+}
+
 async function main(): Promise<void> {
   try {
     const options = parseArgs();
-
-    // Load and parse data
-    const driversData = JSON.parse(readFileSync(options.drivers, 'utf-8'));
-    const ridesData = JSON.parse(readFileSync(options.rides, 'utf-8'));
-
-    const drivers = parseDrivers(driversData);
-    const rides = parseRides(ridesData);
-
-    // Create travel engine
-    const travelEngine = createTravelEngine({ useOsrm: options.osrm });
-
-    // Create strategy and run assignment
-    const strategy = createStrategy(options.strategy, travelEngine);
-    const assignments = await strategy.assign(rides, drivers, {
-      includeDeadheadTime: options.includeDeadheadTime,
-      includeDeadheadFuel: options.includeDeadheadFuel,
-      useOSRM: options.osrm,
-    });
-
-    // Output results
-    const output = formatOutput(assignments);
+    const output = await run(options);
     
     if (options.out) {
       writeFileSync(options.out, output, 'utf-8');

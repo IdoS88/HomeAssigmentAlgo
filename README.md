@@ -499,9 +499,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For questions, issues, or contributions:
 
 1. Check the documentation in `/docs`
-2. Review existing issues
-3. Create a new issue with detailed information
-4. Include test data and expected behavior
+2. Review the [Project Structure](PROJECT-STRUCTURE.md) for code organization
+3. Review existing issues
+4. Create a new issue with detailed information
+5. Include test data and expected behavior
 
 ## 🔄 Version History
 
