@@ -3,7 +3,7 @@ import type { Driver, Ride } from '../domain.js';
 import { isRideLegalForDriver } from '../legal.js';
 import { haversineKm } from '../geo.js';
 import { driverTimeCostAg, fuelCostAg, sumAg } from '../cost.js';
-import { parseDateTime } from '../domain.js';
+import { parseDateTime, isDriverAvailableForRide } from '../domain.js';
 import type { TravelEngine } from '../osrm.js';
 
 // Greedy with ride chaining: pick cheapest driver, enable driver reuse
@@ -37,7 +37,7 @@ export class GreedyStrategy implements Strategy {
       const rideStartTime = parseDateTime(ride.date, ride.startTime);
       const rideEndTime = parseDateTime(ride.date, ride.endTime);
       
-      // Find feasible drivers (legal + available + can reach pickup in time)
+      // Find feasible drivers (legal + available + can reach pickup in time + within shifts)
       const feasibleDrivers = drivers.filter(driver => {
         if (!isRideLegalForDriver(ride, driver)) return false;
         
@@ -45,7 +45,11 @@ export class GreedyStrategy implements Strategy {
         const timeToReach = this.calculateTravelTime(schedule.lastLocation, ride.pickup);
         const arrivalTime = schedule.lastEndTime + timeToReach;
         
-        return arrivalTime <= rideStartTime; // Can reach pickup before ride starts
+        // Can reach pickup before ride starts
+        if (arrivalTime > rideStartTime) return false;
+        
+        // Check if driver is available within their shifts
+        return isDriverAvailableForRide(driver, rideStartTime, rideEndTime, timeToReach);
       });
 
       if (feasibleDrivers.length === 0) {

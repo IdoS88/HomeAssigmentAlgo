@@ -4,7 +4,7 @@
     "firstName": "John",
     "lastName": "Doe",
     "city": "Shlomo, Hadera",
-    "mainPhone": "050-9695520",
+    "mainPhone": "050-9034686",
     "status": "active",
     "licenceDegree": [
       "B"
@@ -21,7 +21,7 @@
     "firstName": "Jane",
     "lastName": "Smith",
     "city": "Alon, Netanya",
-    "mainPhone": "050-5902314",
+    "mainPhone": "050-8015594",
     "status": "active",
     "licenceDegree": [
       "D"
@@ -38,7 +38,7 @@
     "firstName": "David",
     "lastName": "Cohen",
     "city": "Derekh HaBanim, Pardes Hanna",
-    "mainPhone": "050-8158784",
+    "mainPhone": "050-3671881",
     "status": "active",
     "licenceDegree": [
       "D1"
@@ -55,7 +55,7 @@
     "firstName": "Sarah",
     "lastName": "Levy",
     "city": "Elram, Hadera",
-    "mainPhone": "050-5725495",
+    "mainPhone": "050-4872163",
     "status": "active",
     "licenceDegree": [
       "B"
@@ -72,7 +72,7 @@
     "firstName": "Michael",
     "lastName": "Green",
     "city": "Givat Bilu, Hadera",
-    "mainPhone": "050-9980195",
+    "mainPhone": "050-3832686",
     "status": "active",
     "licenceDegree": [
       "B"
@@ -89,7 +89,7 @@
     "firstName": "Rachel",
     "lastName": "Brown",
     "city": "Kinneret, Netanya",
-    "mainPhone": "050-3519748",
+    "mainPhone": "050-7439972",
     "status": "active",
     "licenceDegree": [
       "D1"

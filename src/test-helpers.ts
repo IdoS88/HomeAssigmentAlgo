@@ -103,6 +103,90 @@ export class TestDataFactory {
       ...overrides,
     });
   }
+
+  /**
+   * Create a driver with specific shift patterns
+   */
+  static createDriverWithShifts(
+    id: string, 
+    shifts: Array<{ start: string; end: string }>, 
+    overrides: Partial<Driver> = {}
+  ): Driver {
+    return this.createDriver(id, {
+      ...overrides,
+      shifts: shifts.map(shift => ({
+        startMinutes: this.parseShiftTime(shift.start),
+        endMinutes: this.parseShiftTime(shift.end),
+      })),
+    });
+  }
+
+  /**
+   * Create a ride with specific time constraints
+   */
+  static createRideWithTime(
+    id: string,
+    startTime: string,
+    endTime: string,
+    overrides: Partial<Ride> = {}
+  ): Ride {
+    return this.createRide(id, {
+      startTime,
+      endTime,
+      ...overrides,
+    });
+  }
+
+  /**
+   * Create edge case test data
+   */
+  static createEdgeCaseData(): { drivers: Driver[]; rides: Ride[] } {
+    return {
+      drivers: [
+        // Driver with no shifts (backward compatibility)
+        this.createDriver('no-shifts-driver', { fuelCost: 2.0 }),
+        
+        // Driver with single shift
+        this.createDriverWithShifts('single-shift-driver', [{ start: '06:00', end: '12:00' }]),
+        
+        // Driver with multiple shifts
+        this.createDriverWithShifts('multi-shift-driver', [
+          { start: '06:00', end: '10:00' },
+          { start: '14:00', end: '18:00' }
+        ]),
+        
+        // Driver with overlapping shifts (edge case)
+        this.createDriverWithShifts('overlapping-shift-driver', [
+          { start: '06:00', end: '12:00' },
+          { start: '11:00', end: '17:00' }
+        ]),
+      ],
+      rides: [
+        // Ride at exact shift boundary
+        this.createRideWithTime('boundary-ride', '06:00', '12:00'),
+        
+        // Ride 1 minute before shift
+        this.createRideWithTime('before-shift-ride', '05:59', '06:30'),
+        
+        // Ride 1 minute after shift
+        this.createRideWithTime('after-shift-ride', '12:01', '12:30'),
+        
+        // Ride between shifts
+        this.createRideWithTime('between-shifts-ride', '12:00', '14:00'),
+        
+        // Very short ride
+        this.createRideWithTime('short-ride', '08:00', '08:01'),
+        
+        // Very long ride
+        this.createRideWithTime('long-ride', '07:00', '11:00'),
+      ]
+    };
+  }
+
+  private static parseShiftTime(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return (hours ?? 0) * 60 + (minutes ?? 0);
+  }
 }
 
 // Test assertion helpers
@@ -133,6 +217,77 @@ export class TestAssertions {
     
     if (assignment.loadedDistanceKm <= 0) {
       throw new Error('Assignment should have positive loaded distance');
+    }
+  }
+
+  /**
+   * Assert that all assignments are valid
+   */
+  static assertAllAssignmentsValid(assignments: Assignment[]): void {
+    if (!Array.isArray(assignments)) {
+      throw new Error('Assignments must be an array');
+    }
+    
+    assignments.forEach((assignment, index) => {
+      try {
+        this.assertValidAssignment(assignment);
+      } catch (error) {
+        throw new Error(`Assignment at index ${index} is invalid: ${error}`);
+      }
+    });
+  }
+
+  /**
+   * Assert that no driver is assigned multiple rides at the same time
+   */
+  static assertNoOverlappingAssignments(assignments: Assignment[]): void {
+    const driverSchedules = new Map<string, Array<{ start: number; end: number; rideId: string }>>();
+    
+    for (const assignment of assignments) {
+      const driverId = assignment.driver.id;
+      const rideStart = this.parseTime(assignment.ride.startTime);
+      const rideEnd = this.parseTime(assignment.ride.endTime);
+      
+      if (!driverSchedules.has(driverId)) {
+        driverSchedules.set(driverId, []);
+      }
+      
+      const schedule = driverSchedules.get(driverId)!;
+      
+      // Check for overlaps
+      for (const existing of schedule) {
+        const hasOverlap = !(rideEnd <= existing.start || rideStart >= existing.end);
+        if (hasOverlap) {
+          throw new Error(
+            `Driver ${driverId} has overlapping assignments: ride ${assignment.ride.id} (${assignment.ride.startTime}-${assignment.ride.endTime}) overlaps with ride ${existing.rideId}`
+          );
+        }
+      }
+      
+      schedule.push({ start: rideStart, end: rideEnd, rideId: assignment.ride.id });
+    }
+  }
+
+  /**
+   * Assert that all assignments respect driver shifts
+   */
+  static assertAssignmentsRespectShifts(assignments: Assignment[]): void {
+    for (const assignment of assignments) {
+      const driver = assignment.driver;
+      if (driver.shifts && driver.shifts.length > 0) {
+        const rideStart = this.parseTime(assignment.ride.startTime);
+        const rideEnd = this.parseTime(assignment.ride.endTime);
+        
+        const isWithinShift = driver.shifts.some(shift => 
+          rideStart >= shift.startMinutes && rideEnd <= shift.endMinutes
+        );
+        
+        if (!isWithinShift) {
+          throw new Error(
+            `Assignment of ride ${assignment.ride.id} to driver ${driver.id} is outside driver's shifts`
+          );
+        }
+      }
     }
   }
 

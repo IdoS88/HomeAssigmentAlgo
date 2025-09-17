@@ -9,6 +9,13 @@
     "build": "tsc",
     "start": "node dist/cli.js",
     "test": "tsx --test --test-reporter=spec",
+    "test:unit": "tsx --test --test-reporter=spec src/**/*.test.ts --exclude src/**/*.integration.test.ts src/**/*.performance.test.ts",
+    "test:integration": "tsx --test --test-reporter=spec src/**/*.integration.test.ts",
+    "test:performance": "tsx --test --test-reporter=spec src/**/*.performance.test.ts",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:performance",
+    "test:coverage": "tsx --test --test-reporter=spec --coverage",
+    "test:watch": "tsx --test --test-reporter=spec --watch",
+    "test:debug": "tsx --inspect-brk --test --test-reporter=spec",
     "gen:data": "tsx tools/generate-data.ts --seed tools/seed.md",
     "gen:data:osrm": "tsx tools/generate-data.ts --seed tools/seed.md --verbose --validate"
   },

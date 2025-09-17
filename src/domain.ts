@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// Shift type for driver availability
+export type Shift = { start: string; end: string }; // "HH:mm" format
+
 // Raw driver schema from JSON
 export const RawDriverSchema = z.object({
   driverId: z.string(),
@@ -12,6 +15,10 @@ export const RawDriverSchema = z.object({
   numberOfSeats: z.number().int().positive(),
   fuelCost: z.number().positive(), // ₪/km
   city_coords: z.tuple([z.number(), z.number()]),
+  shifts: z.array(z.object({
+    start: z.string(), // "HH:mm" format
+    end: z.string(),   // "HH:mm" format
+  })).optional(),
 });
 
 // Raw ride schema from JSON
@@ -38,6 +45,10 @@ export const DriverSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }),
+  shifts: z.array(z.object({
+    startMinutes: z.number(), // minutes since day start
+    endMinutes: z.number(),   // minutes since day start
+  })).optional(),
 });
 
 // Processed ride schema for internal use
@@ -66,6 +77,44 @@ export function parseDateTime(date: string, time: string): number {
   return (hours ?? 0) * 60 + (minutes ?? 0);
 }
 
+// Parse shift time to minutes since day start
+export function parseShiftTime(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return (hours ?? 0) * 60 + (minutes ?? 0);
+}
+
+// Check if driver is available for a ride considering shifts and deadhead time
+export function isDriverAvailableForRide(
+  driver: Driver,
+  rideStartTime: number,
+  rideEndTime: number,
+  deadheadTimeMinutes: number
+): boolean {
+  // If no shifts defined, driver is always available (backward compatibility)
+  if (!driver.shifts || driver.shifts.length === 0) {
+    return true;
+  }
+
+  // Check if the entire ride (including deadhead) fits within any shift
+  return driver.shifts.some(shift => {
+    const shiftStart = shift.startMinutes;
+    const shiftEnd = shift.endMinutes;
+    
+    // Ride must start after shift starts (accounting for deadhead)
+    const earliestRideStart = shiftStart + deadheadTimeMinutes;
+    if (rideStartTime < earliestRideStart) {
+      return false;
+    }
+    
+    // Ride must end before shift ends
+    if (rideEndTime > shiftEnd) {
+      return false;
+    }
+    
+    return true;
+  });
+}
+
 // Parse drivers from JSON
 export function parseDrivers(json: unknown): Driver[] {
   const rawDrivers = z.array(RawDriverSchema).parse(json);
@@ -79,6 +128,10 @@ export function parseDrivers(json: unknown): Driver[] {
       lat: raw.city_coords[0],
       lng: raw.city_coords[1],
     },
+    shifts: raw.shifts?.map(shift => ({
+      startMinutes: parseShiftTime(shift.start),
+      endMinutes: parseShiftTime(shift.end),
+    })),
   }));
 }
 

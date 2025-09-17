@@ -100,7 +100,7 @@ describe('GreedyStrategy', () => {
     const rides = [TestDataFactory.createRide('ride1', { 
       passengers: 4, 
       pickup: { lat: 32.0, lng: 34.0 }, // Same location as drivers
-      dropoff: { lat: 32.0, lng: 34.0 } // Same location - no travel cost
+      dropoff: { lat: 32.1, lng: 34.1 } // Different location to ensure positive distance
     })];
     
     const assignments = await strategy.assign(rides, drivers);
