@@ -2,6 +2,17 @@
 
 A sophisticated ride assignment system that optimally matches drivers with rides using multiple algorithmic strategies, including greedy and minimum cost flow approaches.
 
+## 🧠 Algorithm Overview
+
+This project implements and compares two distinct approaches to the ride assignment problem, with an intelligent auto-selection mechanism that chooses the optimal strategy based on performance metrics.
+
+### Problem Definition
+
+The ride assignment problem involves:
+- **Input**: A set of drivers with constraints (license type, vehicle capacity, availability, location) and a set of ride requests (pickup/dropoff locations, passenger count, time windows)
+- **Objective**: Maximize the number of rides served while minimizing total operational cost
+- **Constraints**: Driver availability, license requirements, vehicle capacity, geographic feasibility, and time windows
+
 ## 📋 Requirements
 
 - **Node.js**: >= 22.0.0
@@ -48,6 +59,240 @@ Where:
   - `driverId`: The ID of the assigned driver
   - `rideIds`: Array of ride IDs assigned to this driver
 - `totalCost`: Total cost of all assignments in agorot (Israeli currency units)
+
+## 🔬 Algorithm Details
+
+### 1. Greedy Strategy
+
+**Approach**: Locally optimal choices with ride chaining
+**Time Complexity**: O(n²) where n is the number of rides
+**Space Complexity**: O(n)
+
+#### How it Works:
+1. **Sort rides** by start time to process chronologically
+2. **For each ride**:
+   - Find all feasible drivers (legal, available, can reach pickup in time)
+   - Calculate total cost for each feasible driver
+   - Select the driver with minimum cost
+   - Update driver's location and availability for next ride
+
+#### Key Features:
+- **Ride Chaining**: Drivers can be assigned multiple rides in sequence
+- **Real-time Updates**: Driver locations and availability are updated after each assignment
+- **Cost Optimization**: Considers both time cost (30₪/hour) and fuel cost per driver
+- **Constraint Validation**: Ensures license compatibility, vehicle capacity, and time feasibility
+
+#### Advantages:
+- ✅ Fast execution (suitable for real-time applications)
+- ✅ Simple to understand and implement
+- ✅ Good performance for most practical scenarios
+- ✅ Handles ride chaining efficiently
+
+#### Limitations:
+- ❌ May not find globally optimal solutions
+- ❌ Can get stuck in local optima
+- ❌ Performance degrades with complex constraint interactions
+
+### 2. Minimum Cost Flow Strategy
+
+**Approach**: Optimal assignment using network flow algorithms
+**Time Complexity**: O(n³) in worst case
+**Space Complexity**: O(n²)
+
+#### How it Works:
+1. **Build a flow network** with drivers and rides as nodes
+2. **Create edges** between feasible driver-ride pairs with costs
+3. **Apply minimum cost flow algorithm** to find optimal assignments
+4. **Extract assignments** from the flow solution
+
+#### Key Features:
+- **Global Optimization**: Finds mathematically optimal solutions
+- **Constraint Satisfaction**: Handles complex constraint interactions
+- **Cost Minimization**: Guarantees minimum total cost for given assignments
+- **Scalability**: Efficient for medium-sized problems
+
+#### Advantages:
+- ✅ Guaranteed optimal solutions
+- ✅ Handles complex constraint interactions
+- ✅ Better performance on difficult problem instances
+- ✅ Mathematically rigorous approach
+
+#### Limitations:
+- ❌ Higher computational complexity
+- ❌ May be overkill for simple problems
+- ❌ Requires more memory for large datasets
+
+### 3. Auto Strategy (Intelligent Selection)
+
+**Approach**: Dynamic strategy selection based on performance metrics
+**Decision Criteria**: Served rides → Total cost → Runtime
+
+#### Selection Logic:
+```typescript
+function better(a: SolveResult, b: SolveResult): boolean {
+  if (a.served !== b.served) return a.served > b.served;  // Primary: maximize rides
+  if (a.objective !== b.objective) return a.objective < b.objective;  // Secondary: minimize cost
+  return a.meta.timeMs < b.meta.timeMs;  // Tertiary: prefer faster execution
+}
+```
+
+#### How it Works:
+1. **Run both strategies** in parallel with timeout protection
+2. **Compare results** using the optimization criteria
+3. **Select the best strategy** based on performance
+4. **Return the optimal solution** with metadata about which strategy was chosen
+
+#### Advantages:
+- ✅ Always chooses the best available solution
+- ✅ Adapts to different problem characteristics
+- ✅ Provides fallback if one strategy fails
+- ✅ Transparent about which algorithm was selected
+
+## 🎯 Decision-Making Process
+
+### Why These Algorithms?
+
+1. **Greedy Strategy**:
+   - **Real-world Applicability**: Most ride-sharing services use greedy-like algorithms for real-time matching
+   - **Performance**: Fast enough for real-time applications
+   - **Simplicity**: Easy to understand, debug, and maintain
+   - **Ride Chaining**: Efficiently handles driver reuse across multiple rides
+
+2. **Minimum Cost Flow**:
+   - **Optimality**: Provides mathematically optimal solutions
+   - **Complex Constraints**: Better handles intricate constraint interactions
+   - **Benchmarking**: Serves as a baseline for optimal performance
+   - **Academic Rigor**: Demonstrates understanding of advanced algorithms
+
+3. **Auto Strategy**:
+   - **Best of Both Worlds**: Combines speed and optimality
+   - **Adaptability**: Automatically selects the best approach for each problem
+   - **Robustness**: Provides fallback mechanisms
+   - **Transparency**: Shows which algorithm was chosen and why
+
+### Cost Model
+
+The algorithms optimize based on a comprehensive cost model:
+
+```typescript
+totalCost = timeCost + fuelCost + deadheadCost
+```
+
+Where:
+- **Time Cost**: 30₪/hour = 50 agorot/minute for ride duration
+- **Fuel Cost**: Driver's fuel cost × distance traveled
+- **Deadhead Cost**: Optional cost for driver to reach pickup location
+
+### Constraint Handling
+
+Both algorithms respect the following constraints:
+
+1. **License Compatibility**: 
+   - B license: max 8 passengers
+   - D1 license: max 16 passengers  
+   - D license: max 50 passengers
+
+2. **Vehicle Capacity**: Driver's vehicle must accommodate ride's passenger count
+
+3. **Time Windows**: Driver must be available during ride time and can reach pickup location
+
+4. **Geographic Feasibility**: Driver must be able to reach pickup location before ride starts
+
+5. **Shift Availability**: Driver must be within their working hours
+
+### Performance Characteristics
+
+| Strategy | Best For | Time Complexity | Space Complexity | Optimality |
+|----------|----------|-----------------|------------------|------------|
+| Greedy | Real-time, simple constraints | O(n²) | O(n) | Local optimum |
+| Min-Cost Flow | Complex constraints, batch processing | O(n³) | O(n²) | Global optimum |
+| Auto | All scenarios | Variable | Variable | Best available |
+
+## 🔧 Implementation Details
+
+### Architecture Decisions
+
+1. **Strategy Pattern**: 
+   - Clean separation of algorithms
+   - Easy to add new strategies
+   - Consistent interface for all approaches
+
+2. **Ride Chaining Support**:
+   - Drivers can be assigned multiple rides in sequence
+   - Dynamic location updates after each assignment
+   - Efficient driver utilization
+
+3. **Cost Calculation**:
+   - Realistic cost model based on Israeli market rates
+   - Separate time and fuel cost components
+   - Optional deadhead cost inclusion
+
+4. **Constraint Validation**:
+   - Comprehensive business rule checking
+   - License type validation
+   - Vehicle capacity verification
+   - Time window feasibility
+
+### Trade-offs and Considerations
+
+#### Greedy vs. Optimal Trade-offs
+
+| Aspect | Greedy | Min-Cost Flow |
+|--------|--------|---------------|
+| **Speed** | ⚡ Fast (O(n²)) | 🐌 Slower (O(n³)) |
+| **Optimality** | 📊 Good (local optimum) | 🎯 Perfect (global optimum) |
+| **Memory** | 💾 Low | 💾 High |
+| **Real-time** | ✅ Suitable | ❌ Batch processing |
+| **Complexity** | 🟢 Simple | 🔴 Complex |
+
+#### When to Use Each Strategy
+
+**Use Greedy When**:
+- Real-time ride matching is required
+- Problem size is large (>1000 rides)
+- Simple constraint interactions
+- Fast response time is critical
+
+**Use Min-Cost Flow When**:
+- Optimal solutions are required
+- Complex constraint interactions
+- Batch processing is acceptable
+- Problem size is moderate (<500 rides)
+
+**Use Auto When**:
+- You want the best of both worlds
+- Problem characteristics vary
+- Maximum performance is desired
+- You want transparency in algorithm selection
+
+### Performance Optimization
+
+1. **Parallel Execution**: Auto strategy runs both algorithms in parallel
+2. **Timeout Protection**: Prevents hanging on difficult problem instances
+3. **Early Termination**: Stops when optimal solution is found
+4. **Memory Management**: Efficient data structures for large datasets
+
+### Extensibility
+
+The architecture supports easy addition of new strategies:
+
+```typescript
+// Add a new strategy
+export const newStrategy: Strategy = {
+  name: "new-algorithm",
+  solve(input: ProblemInput): SolveResult {
+    // Implementation here
+  }
+};
+
+// Register in CLI
+const strategies = {
+  auto: autoStrategy,
+  greedy: greedyStrategy,
+  mincost: mincostStrategy,
+  new: newStrategy  // Add here
+};
+```
 
 ### Alternative Commands
 
