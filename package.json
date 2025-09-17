@@ -8,7 +8,9 @@
     "dev": "tsx src/cli.ts",
     "build": "tsc",
     "start": "node dist/cli.js",
-    "test": "tsx --test --test-reporter=spec"
+    "test": "tsx --test --test-reporter=spec",
+    "gen:data": "tsx tools/generate-data.ts --seed tools/seed.md",
+    "gen:data:osrm": "tsx tools/generate-data.ts --seed tools/seed.md --verbose --validate"
   },
   "dependencies": {
     "zod": "^3.22.4",

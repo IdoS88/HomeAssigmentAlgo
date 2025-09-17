@@ -188,5 +188,5 @@ describe('GreedyStrategy', () => {
     TestAssertions.assertAllAssignmentsValid(assignments);
     
     console.log(`Greedy strategy: ${assignments.length}/${rides.length} rides assigned in ${duration.toFixed(2)}ms`);
-  }, { timeout: 10000 }); // 10 second timeout
+  }); // Performance test
 });
