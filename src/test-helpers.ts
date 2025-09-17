@@ -2,7 +2,8 @@
  * Test helper utilities for creating test data and common test operations
  */
 
-import type { Driver, Ride, Assignment } from './domain.js';
+import type { Driver, Ride } from './domain.js';
+import type { Assignment } from './strategy.js';
 
 // Common test locations
 export const TEST_LOCATIONS = {
@@ -278,7 +279,7 @@ export class TestAssertions {
         const rideStart = this.parseTime(assignment.ride.startTime);
         const rideEnd = this.parseTime(assignment.ride.endTime);
         
-        const isWithinShift = driver.shifts.some(shift => 
+        const isWithinShift = driver.shifts.some((shift: { startMinutes: number; endMinutes: number }) => 
           rideStart >= shift.startMinutes && rideEnd <= shift.endMinutes
         );
         
@@ -328,7 +329,7 @@ export class TestAssertions {
   /**
    * Assert that all rides are assigned to feasible drivers
    */
-  static assertAllAssignmentsValid(assignments: Assignment[]): void {
+  static assertAllAssignmentsFeasible(assignments: Assignment[]): void {
     for (const assignment of assignments) {
       this.assertValidAssignment(assignment);
       this.assertDriverCanHandleRide(assignment.driver, assignment.ride);
@@ -346,7 +347,7 @@ export class TestAssertions {
 
   private static parseTime(timeStr: string): number {
     const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
+    return (hours ?? 0) * 60 + (minutes ?? 0);
   }
 }
 

@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from './greedy.js';
+import { GreedyStrategy } from '../../src/strategies/greedy.js';
 
 describe('Debug Test', () => {
   test('GIVEN simple data WHEN assigning THEN should complete', async () => {

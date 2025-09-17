@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from './greedy.js';
-import { MinCostFlowStrategy } from './minCostFlow.js';
+import { GreedyStrategy } from '../../src/strategies/greedy.js';
+import { MinCostFlowStrategy } from '../../src/strategies/minCostFlow.js';
 import { parseDrivers, parseRides } from '../domain.js';
 
 describe('Algorithm Comparison', () => {
