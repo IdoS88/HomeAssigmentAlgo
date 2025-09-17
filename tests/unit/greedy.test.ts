@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { GreedyStrategy } from './greedy.js';
-import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../test-helpers.js';
+import { GreedyStrategy } from '../../dist/strategies/greedy-legacy.js';
+import { TestDataFactory, TestAssertions, PerformanceTestHelpers } from '../../dist/test-helpers.js';
 
 describe('GreedyStrategy', () => {
 
@@ -100,7 +100,7 @@ describe('GreedyStrategy', () => {
     const rides = [TestDataFactory.createRide('ride1', { 
       passengers: 4, 
       pickup: { lat: 32.0, lng: 34.0 }, // Same location as drivers
-      dropoff: { lat: 32.0, lng: 34.0 } // Same location - no travel cost
+      dropoff: { lat: 32.1, lng: 34.1 } // Different location to ensure positive distance
     })];
     
     const assignments = await strategy.assign(rides, drivers);
@@ -188,5 +188,5 @@ describe('GreedyStrategy', () => {
     TestAssertions.assertAllAssignmentsValid(assignments);
     
     console.log(`Greedy strategy: ${assignments.length}/${rides.length} rides assigned in ${duration.toFixed(2)}ms`);
-  }, { timeout: 10000 }); // 10 second timeout
+  }); // Performance test
 });

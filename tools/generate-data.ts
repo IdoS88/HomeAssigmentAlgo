@@ -201,6 +201,19 @@ class DataGenerator {
     return `050-${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
   }
 
+  private generateShifts(index: number): Array<{ start: string; end: string }> {
+    // Generate realistic shift patterns
+    const shiftPatterns = [
+      [{ start: "06:00", end: "14:00" }], // Early shift
+      [{ start: "14:00", end: "22:00" }], // Late shift
+      [{ start: "08:00", end: "16:00" }], // Day shift
+      [{ start: "06:00", end: "10:00" }, { start: "14:00", end: "18:00" }], // Split shift
+      [{ start: "07:00", end: "15:00" }], // Standard shift
+    ];
+    
+    return shiftPatterns[index % shiftPatterns.length]!;
+  }
+
   private validateData(drivers: unknown[], rides: unknown[]): void {
     if (!this.options.validate) return;
 
@@ -266,6 +279,7 @@ class DataGenerator {
           numberOfSeats: driver.seats,
           fuelCost: driver.fuelCost,
           city_coords: coords,
+          shifts: this.generateShifts(index), // Add shifts
         };
       });
 

@@ -1,9 +1,9 @@
 import { ProblemInput, SolveResult, Strategy } from "./types.js";
-import { GreedyStrategy } from "./greedy-legacy.js";
+import { MinCostFlowStrategy } from "./mincost-legacy.js";
 import { parseDrivers, parseRides } from "../domain.js";
 
-export const greedyStrategy: Strategy = {
-  name: "greedy",
+export const mincostStrategy: Strategy = {
+  name: "mincost",
   async solve(input: ProblemInput): Promise<SolveResult> {
     const t0 = performance.now();
     
@@ -12,8 +12,8 @@ export const greedyStrategy: Strategy = {
       const drivers = parseDrivers(input.drivers);
       const rides = parseRides(input.rides);
       
-      // Create and run the greedy strategy
-      const strategy = new GreedyStrategy();
+      // Create and run the min-cost flow strategy
+      const strategy = new MinCostFlowStrategy();
       const assignments = await strategy.assign(rides, drivers);
       
       // Calculate metrics
@@ -25,7 +25,7 @@ export const greedyStrategy: Strategy = {
         assignments, 
         served, 
         objective, 
-        meta: { name: "greedy", timeMs } 
+        meta: { name: "mincost", timeMs } 
       };
     } catch (error) {
       const timeMs = performance.now() - t0;
@@ -33,7 +33,7 @@ export const greedyStrategy: Strategy = {
         assignments: [],
         served: 0,
         objective: Number.POSITIVE_INFINITY,
-        meta: { name: "greedy (failed)", timeMs }
+        meta: { name: "mincost (failed)", timeMs }
       };
     }
   }
