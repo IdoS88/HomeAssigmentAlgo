@@ -110,7 +110,7 @@ function createStrategy(strategyName: string, travelEngine?: any): Strategy {
     case 'greedy':
       return new GreedyStrategy(travelEngine);
     case 'mincost':
-      return new MinCostFlowStrategy();
+      return new MinCostFlowStrategy(travelEngine);
     default:
       throw new Error(`Unknown strategy: ${strategyName}`);
   }
