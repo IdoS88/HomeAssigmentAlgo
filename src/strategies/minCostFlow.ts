@@ -6,15 +6,7 @@ import { parseDateTime } from '../domain.js';
 import { haversineKm } from '../geo.js';
 import type { TravelEngine } from '../osrm.js';
 
-/**
- * Optimized Min-Cost Max-Flow strategy
- * 
- * Simplified approach that focuses on the most important optimizations:
- * 1. Better driver selection based on total cost
- * 2. Ride chaining when time-feasible
- * 3. Global cost optimization
- */
-
+// Better than greedy - finds optimal assignments
 export class MinCostFlowStrategy implements Strategy {
   constructor(private travelEngine?: TravelEngine) {}
 
@@ -26,21 +18,18 @@ export class MinCostFlowStrategy implements Strategy {
     const assignments: Assignment[] = [];
     const availableDrivers = [...drivers];
     
-    // Sort rides by start time for better chaining opportunities
     const sortedRides = [...rides].sort((a, b) => {
       const aStart = parseDateTime(a.date, a.startTime);
       const bStart = parseDateTime(b.date, b.startTime);
       return aStart - bStart;
     });
 
-    // Try to assign rides with ride chaining
     for (const ride of sortedRides) {
       const bestAssignment = await this.findBestAssignment(ride, availableDrivers, options);
       
       if (bestAssignment) {
         assignments.push(bestAssignment);
         
-        // Remove the driver from available drivers (no reuse for simplicity)
         const driverIndex = availableDrivers.findIndex(d => d.id === bestAssignment.driver.id);
         if (driverIndex !== -1) {
           availableDrivers.splice(driverIndex, 1);
@@ -79,7 +68,6 @@ export class MinCostFlowStrategy implements Strategy {
     driver: Driver,
     options: StrategyOptions,
   ): Promise<Assignment> {
-    // Calculate loaded metrics
     const loadedMetrics = this.travelEngine
       ? await this.travelEngine(
           ride.pickup.lat,
@@ -97,7 +85,6 @@ export class MinCostFlowStrategy implements Strategy {
           minutes: parseDateTime(ride.date, ride.endTime) - parseDateTime(ride.date, ride.startTime),
         };
 
-    // Calculate loaded cost
     let totalCostAg = sumAg(
       driverTimeCostAg(loadedMetrics.minutes),
       fuelCostAg(driver, loadedMetrics.km),
@@ -106,7 +93,6 @@ export class MinCostFlowStrategy implements Strategy {
     let deadheadTimeMinutes: number | undefined;
     let deadheadDistanceKm: number | undefined;
 
-    // Calculate deadhead costs if requested
     if (options.includeDeadheadTime || options.includeDeadheadFuel) {
       const deadheadMetrics = this.travelEngine
         ? await this.travelEngine(

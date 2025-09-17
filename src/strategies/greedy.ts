@@ -6,12 +6,7 @@ import { driverTimeCostAg, fuelCostAg, sumAg } from '../cost.js';
 import { parseDateTime } from '../domain.js';
 import type { TravelEngine } from '../osrm.js';
 
-/**
- * Greedy baseline strategy:
- * 1. Sort rides by start time
- * 2. For each ride, find feasible drivers
- * 3. Choose driver with lowest fuelCost (tie-breaker: stable IDs)
- */
+// Simple greedy: pick cheapest driver for each ride
 export class GreedyStrategy implements Strategy {
   constructor(private travelEngine?: TravelEngine) {}
 
@@ -23,7 +18,7 @@ export class GreedyStrategy implements Strategy {
     const assignments: Assignment[] = [];
     const availableDrivers = [...drivers];
 
-    // Sort rides by start time
+    // Sort by time
     const sortedRides = [...rides].sort((a, b) => {
       const aStart = parseDateTime(a.date, a.startTime);
       const bStart = parseDateTime(b.date, b.startTime);
@@ -31,17 +26,15 @@ export class GreedyStrategy implements Strategy {
     });
 
     for (const ride of sortedRides) {
-      // Find feasible drivers (legal + available)
       const feasibleDrivers = availableDrivers.filter(driver =>
         isRideLegalForDriver(ride, driver),
       );
 
       if (feasibleDrivers.length === 0) {
-        // No feasible driver found - skip this ride
         continue;
       }
 
-      // Choose driver with lowest fuelCost, then by ID for stability
+      // Pick cheapest driver
       const chosenDriver = feasibleDrivers.sort((a, b) => {
         if (a.fuelCost !== b.fuelCost) {
           return a.fuelCost - b.fuelCost;
@@ -49,7 +42,6 @@ export class GreedyStrategy implements Strategy {
         return a.id.localeCompare(b.id);
       })[0]!;
 
-      // Calculate costs using travel engine
       const loadedMetrics = this.travelEngine
         ? await this.travelEngine(
             ride.pickup.lat,
@@ -115,7 +107,6 @@ export class GreedyStrategy implements Strategy {
         }
       }
 
-      // Create assignment
       const assignment: Assignment = {
         ride,
         driver: chosenDriver,
@@ -128,7 +119,6 @@ export class GreedyStrategy implements Strategy {
 
       assignments.push(assignment);
 
-      // Remove chosen driver from available drivers
       const driverIndex = availableDrivers.findIndex(d => d.id === chosenDriver.id);
       if (driverIndex !== -1) {
         availableDrivers.splice(driverIndex, 1);
