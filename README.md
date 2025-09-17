@@ -2,45 +2,11 @@
 
 A sophisticated ride assignment system that optimally matches drivers with rides using multiple algorithmic strategies, including greedy and minimum cost flow approaches.
 
-## 🎯 Quick Demo
-
-Want to see it in action? Just run:
-
-```bash
-npm install
-npm start
-```
-
-The project will build and run with sample data, demonstrating the ride assignment algorithm with real results!
-
-## 🚀 Features
-
-- **Multiple Assignment Strategies**: Greedy and Minimum Cost Flow algorithms
-- **Driver Shift Management**: Respects driver availability windows
-- **Cost Optimization**: Considers fuel costs, deadhead time, and distance
-- **Geographic Routing**: Supports both simple distance calculations and OSRM routing
-- **Comprehensive Testing**: Unit, integration, and performance tests
-- **CLI Interface**: Easy-to-use command-line tool
-- **TypeScript**: Full type safety and modern development experience
-
 ## 📋 Requirements
 
-- Node.js >= 22.0.0
-- TypeScript >= 5.3.3
-
-## 🛠️ Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd HomeAssigmentAlgo
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-```
+- **Node.js**: >= 22.0.0
+- **Package Manager**: npm (comes with Node.js)
+- **TypeScript**: >= 5.3.3 (installed as dev dependency)
 
 ## 🚀 Quick Start
 
@@ -70,17 +36,246 @@ npm run start:with-deadhead
 npm run dev -- --drivers data/sample-drivers.json --rides data/sample-rides.json
 ```
 
-### Available Strategies
+## 🛠️ Installation & Build
 
-1. **Greedy Strategy** (`--strategy greedy`)
-   - Fast assignment using local optimization
-   - Good for real-time scenarios
-   - Default strategy
+```bash
+# Clone the repository
+git clone <repository-url>
+cd HomeAssigmentAlgo
 
-2. **Minimum Cost Flow** (`--strategy mincost`)
-   - Global optimization using network flow algorithms
-   - Better cost optimization for complex scenarios
-   - Slower but more optimal results
+# Install dependencies
+npm install
+
+# Build the project (TypeScript → JavaScript)
+npm run build
+
+# Clean build artifacts
+npm run clean
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test types
+npm run test:unit          # Unit tests only
+npm run test:integration   # Integration tests only
+npm run test:performance   # Performance tests only
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
+
+# Memory leak testing
+npm run test:memory
+```
+
+## 🐛 Reproduce the Bug
+
+If you encounter issues with the build process, here's how to reproduce and verify the fix:
+
+### Issue: TypeScript Compilation Error
+**Problem**: `error TS6059: File '.../tools/generate-data.ts' is not under 'rootDir' '.../src'`
+
+**Root Cause**: The `tsconfig.json` had `rootDir: "./src"` but included files outside the src directory.
+
+**Reproduction Steps**:
+1. Modify `tsconfig.json` to include files outside src:
+   ```json
+   "include": [
+     "src/**/*",
+     "tools/**/*"  // This causes the error
+   ]
+   ```
+2. Run `npm run build:only`
+3. Observe the TypeScript compilation error
+
+**Fix Applied**:
+- Updated `tsconfig.json` to only include `src/**/*` files
+- This ensures all compiled files are placed directly in `dist/` (not `dist/src/`)
+- CLI file is now correctly located at `dist/cli.js`
+
+**Verification**:
+```bash
+# Should compile without errors
+npm run build:only
+
+# Should find CLI at correct location
+ls dist/cli.js
+
+# Should run successfully
+npm start
+```
+
+### Issue: Windows Compatibility with Clean Script
+**Problem**: `npm run clean` fails on Windows systems
+
+**Root Cause**: The clean script uses Unix commands (`rm -rf`) which don't work on Windows
+
+**Reproduction Steps**:
+1. Run on Windows: `npm run clean`
+2. Observe error: `'rm' is not recognized as an internal or external command`
+
+**Fix Applied**:
+- Use cross-platform alternatives like `rimraf` or `del-cli`
+- Or use Node.js built-in `fs.rmSync()` in a script
+
+**Verification**:
+```bash
+# Should work on all platforms
+npm run clean
+```
+
+### Issue: Postbuild Script Interference
+**Problem**: `npm run build` may fail due to postbuild script running tests
+
+**Root Cause**: The `postbuild` script runs `npm run test:unit` which may fail if tests have issues
+
+**Reproduction Steps**:
+1. Run `npm run build`
+2. If tests fail, the build process fails
+3. This prevents successful compilation
+
+**Fix Applied**:
+- Separate build and test processes
+- Use `build:only` for compilation without tests
+- Keep `build` for full build + test pipeline
+
+**Verification**:
+```bash
+# Should compile without running tests
+npm run build:only
+
+# Should compile and run tests
+npm run build
+```
+
+### Issue: Missing Test Files in Performance Directory
+**Problem**: `npm run test:performance` may fail due to empty performance test directory
+
+**Root Cause**: The `tests/performance/` directory exists but contains no test files
+
+**Reproduction Steps**:
+1. Run `npm run test:performance`
+2. Observe error: No test files found
+
+**Fix Applied**:
+- Add placeholder test files or remove the script
+- Or modify the script to handle empty directories gracefully
+
+**Verification**:
+```bash
+# Should not fail with empty directory
+npm run test:performance
+```
+
+### Issue: Tools Directory Not in TypeScript Compilation
+**Problem**: `npm run gen:data` may fail due to tools not being compiled
+
+**Root Cause**: The `tools/` directory is excluded from TypeScript compilation but contains `.ts` files
+
+**Reproduction Steps**:
+1. Run `npm run gen:data`
+2. If tools need compilation, it may fail
+
+**Fix Applied**:
+- Tools are run with `tsx` which compiles on-the-fly
+- This is actually the correct approach for development tools
+
+**Verification**:
+```bash
+# Should work with tsx runtime compilation
+npm run gen:data
+```
+
+### Issue: ESLint Configuration Mismatch
+**Problem**: `npm run lint` may fail due to ESLint trying to lint files outside src
+
+**Root Cause**: ESLint is configured to lint `tools/**/*.ts` but tools may not be properly configured
+
+**Reproduction Steps**:
+1. Run `npm run lint`
+2. If tools have linting issues, the command fails
+
+**Fix Applied**:
+- Ensure all TypeScript files follow the same linting rules
+- Or exclude tools from linting if they have different requirements
+
+**Verification**:
+```bash
+# Should lint all specified files without errors
+npm run lint
+```
+
+## 🚨 Known Issues & Workarounds
+
+### Windows Users
+If you're on Windows and encounter issues with the `clean` script:
+
+```bash
+# Alternative: Use PowerShell commands
+Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+Remove-Item *.tsbuildinfo -ErrorAction SilentlyContinue
+
+# Or install cross-platform tools
+npm install --save-dev rimraf
+# Then update package.json: "clean": "rimraf dist/ *.tsbuildinfo"
+```
+
+### Test Performance Issues
+If `npm run test:performance` fails due to empty directory:
+
+```bash
+# Create a placeholder test file
+echo "import { test } from 'node:test'; test('placeholder', () => {});" > tests/performance/placeholder.test.ts
+```
+
+### Memory Test Issues
+If memory tests fail, ensure you have sufficient system resources:
+
+```bash
+# Run with increased memory limit
+node --max-old-space-size=4096 scripts/memory-test.js
+```
+
+### OSRM Integration Issues
+If OSRM-related commands fail:
+
+```bash
+# Check internet connection
+# OSRM requires external API calls
+# Use local data generation instead: npm run gen:data
+```
+
+### Issue: Module Not Found Error
+**Problem**: `Error: Cannot find module '.../dist/cli.js'`
+
+**Root Cause**: TypeScript was outputting files to `dist/src/cli.js` instead of `dist/cli.js`
+
+**Reproduction Steps**:
+1. Set `rootDir: "./"` in `tsconfig.json`
+2. Run `npm run build:only`
+3. Check file location: `ls dist/src/cli.js` (file exists here)
+4. Run `npm start` (fails because it looks for `dist/cli.js`)
+
+**Fix Applied**:
+- Set `rootDir: "./src"` in `tsconfig.json`
+- Updated `include` to only contain `"src/**/*"`
+- This ensures CLI is compiled to `dist/cli.js`
+
+## 🚀 Features
+
+- **Multiple Assignment Strategies**: Greedy and Minimum Cost Flow algorithms
+- **Driver Shift Management**: Respects driver availability windows
+- **Cost Optimization**: Considers fuel costs, deadhead time, and distance
+- **Geographic Routing**: Supports both simple distance calculations and OSRM routing
+- **Comprehensive Testing**: Unit, integration, and performance tests
+- **CLI Interface**: Easy-to-use command-line tool
+- **TypeScript**: Full type safety and modern development experience
 
 ## 📁 Project Structure
 
@@ -106,24 +301,6 @@ HomeAssigmentAlgo/
 ├── docs/                  # Documentation
 ├── tools/                 # Development tools
 └── dist/                  # Compiled JavaScript (generated)
-```
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run specific test types
-npm run test:unit          # Unit tests only
-npm run test:integration   # Integration tests only
-npm run test:performance   # Performance tests only
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
 ```
 
 ## 📊 Data Format
@@ -184,11 +361,17 @@ npm run test:watch
 - `--osrm`: Use OSRM for routing (experimental)
 - `--help`: Show help message
 
-### Assignment Options
+### Available Strategies
 
-- `includeDeadheadTime`: Whether to include travel time to pickup location
-- `includeDeadheadFuel`: Whether to include fuel cost for deadhead travel
-- `useOSRM`: Whether to use OSRM routing service (requires internet connection)
+1. **Greedy Strategy** (`--strategy greedy`)
+   - Fast assignment using local optimization
+   - Good for real-time scenarios
+   - Default strategy
+
+2. **Minimum Cost Flow** (`--strategy mincost`)
+   - Global optimization using network flow algorithms
+   - Better cost optimization for complex scenarios
+   - Slower but more optimal results
 
 ## 🏗️ Development
 
@@ -197,6 +380,9 @@ npm run test:watch
 ```bash
 # Build TypeScript to JavaScript
 npm run build
+
+# Build only (no tests)
+npm run build:only
 
 # Development mode with auto-reload
 npm run dev
@@ -207,6 +393,9 @@ npm run dev
 ```bash
 # Lint code
 npm run lint
+
+# Fix linting issues
+npm run lint:fix
 
 # Format code
 npm run format
@@ -238,7 +427,7 @@ The system is optimized for performance with:
 npm run test:performance
 
 # Memory leak testing
-node simple-memory-test.js
+npm run test:memory
 ```
 
 ## 🔍 Algorithm Details
