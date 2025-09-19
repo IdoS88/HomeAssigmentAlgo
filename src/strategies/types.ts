@@ -1,5 +1,8 @@
-export type ProblemInput = { drivers: any[]; rides: any[] };
-export type Assignment = any;
+import type { Driver, Ride } from '../domain.js';
+import type { Assignment as LegacyAssignment } from '../strategy.js';
+
+export type ProblemInput = { drivers: unknown[]; rides: unknown[] };
+export type Assignment = LegacyAssignment;
 
 export type SolveResult = {
   assignments: Assignment[];

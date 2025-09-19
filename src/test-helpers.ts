@@ -4,6 +4,7 @@
 
 import type { Driver, Ride } from './domain.js';
 import type { Assignment } from './strategy.js';
+import { validateAllAssignments } from './constraints.js';
 
 // Common test locations
 export const TEST_LOCATIONS = {
@@ -270,25 +271,13 @@ export class TestAssertions {
   }
 
   /**
-   * Assert that all assignments respect driver shifts
+   * Assert that all assignments respect all constraints
    */
   static assertAssignmentsRespectShifts(assignments: Assignment[]): void {
-    for (const assignment of assignments) {
-      const driver = assignment.driver;
-      if (driver.shifts && driver.shifts.length > 0) {
-        const rideStart = this.parseTime(assignment.ride.startTime);
-        const rideEnd = this.parseTime(assignment.ride.endTime);
-        
-        const isWithinShift = driver.shifts.some((shift: { startMinutes: number; endMinutes: number }) => 
-          rideStart >= shift.startMinutes && rideEnd <= shift.endMinutes
-        );
-        
-        if (!isWithinShift) {
-          throw new Error(
-            `Assignment of ride ${assignment.ride.id} to driver ${driver.id} is outside driver's shifts`
-          );
-        }
-      }
+    const result = validateAllAssignments(assignments);
+    if (!result.isFeasible) {
+      const violations = result.violations.map(v => `${v.type}: ${v.message}`).join('; ');
+      throw new Error(`Constraint violations found: ${violations}`);
     }
   }
 

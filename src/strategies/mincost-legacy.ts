@@ -1,8 +1,8 @@
 import type { Assignment, Strategy, StrategyOptions } from '../strategy.js';
 import type { Driver, Ride } from '../domain.js';
-import { isRideLegalForDriver } from '../legal.js';
+import { getFeasibleDrivers } from '../constraints.js';
 import { driverTimeCostAg, fuelCostAg, sumAg } from '../cost.js';
-import { parseDateTime, isDriverAvailableForRide } from '../domain.js';
+import { parseDateTime } from '../domain.js';
 import { haversineKm } from '../geo.js';
 import type { TravelEngine } from '../osrm.js';
 
@@ -36,20 +36,8 @@ export class MinCostFlowStrategy implements Strategy {
       const rideStartTime = parseDateTime(ride.date, ride.startTime);
       const rideEndTime = parseDateTime(ride.date, ride.endTime);
       
-      // Find feasible drivers (legal + available + can reach pickup in time + within shifts)
-      const feasibleDrivers = drivers.filter(driver => {
-        if (!isRideLegalForDriver(ride, driver)) return false;
-        
-        const schedule = driverSchedules.get(driver.id)!;
-        const timeToReach = this.calculateTravelTime(schedule.lastLocation, ride.pickup);
-        const arrivalTime = schedule.lastEndTime + timeToReach;
-        
-        // Can reach pickup before ride starts
-        if (arrivalTime > rideStartTime) return false;
-        
-        // Check if driver is available within their shifts
-        return isDriverAvailableForRide(driver, rideStartTime, rideEndTime, timeToReach);
-      });
+      // Find feasible drivers using centralized constraint checking
+      const feasibleDrivers = getFeasibleDrivers(ride, drivers, driverSchedules);
 
       if (feasibleDrivers.length === 0) {
         continue;
@@ -79,10 +67,6 @@ export class MinCostFlowStrategy implements Strategy {
     let bestCost = Number.MAX_SAFE_INTEGER;
 
     for (const driver of availableDrivers) {
-      if (!isRideLegalForDriver(ride, driver)) {
-        continue;
-      }
-
       const assignment = await this.calculateAssignment(ride, driver, options);
       if (assignment.totalCostAg < bestCost) {
         bestAssignment = assignment;

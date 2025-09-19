@@ -3,7 +3,7 @@ import { basename } from "node:path";
 import { autoStrategy } from "./strategies/auto.js";
 import { greedyStrategy } from "./strategies/greedy.js";
 import { mincostStrategy } from "./strategies/mincost.js";
-import { ProblemInput, Strategy } from "./strategies/types.js";
+import { ProblemInput, Strategy, Assignment } from "./strategies/types.js";
 
 function parseArgs(argv: string[]) {
   const args: Record<string, string | boolean> = {};
@@ -47,7 +47,7 @@ async function main() {
   
   // Transform to expected output format
   const output = {
-    assignments: result.assignments.reduce((acc: any[], assignment: any) => {
+    assignments: result.assignments.reduce((acc: Array<{driverId: string; rideIds: string[]}>, assignment: Assignment) => {
       const existingDriver = acc.find(a => a.driverId === assignment.driver.id);
       if (existingDriver) {
         existingDriver.rideIds.push(assignment.ride.id);
@@ -58,7 +58,7 @@ async function main() {
         });
       }
       return acc;
-    }, []),
+    }, [] as Array<{driverId: string; rideIds: string[]}>),
     totalCost: result.objective
   };
 
